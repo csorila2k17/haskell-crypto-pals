@@ -20,7 +20,7 @@ unitTests = testGroup "Unit tests"
 
     testCase "https://cryptopals.com/sets/1/challenges/3 (histogram)" $
       histogram "foobar"
-      @?= Map.fromList [(97,1),(98,1),(102,1),(111,2),(114,1)]
+      @?= Histogram (Map.fromList [(97,1),(98,1),(102,1),(111,2),(114,1)])
   ]
 
 main :: IO ()

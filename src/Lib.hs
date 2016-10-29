@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
-module Lib (hexToBase64, xor, histogram) where
+module Lib (hexToBase64, xor, histogram, Histogram(..)) where
 
 import Data.String (IsString)
 import Data.Word
@@ -19,6 +19,10 @@ newtype Base64 = Base64 { fromBase64 :: BS.ByteString }
 newtype Base16 = Base16 { fromBase16 :: BS.ByteString }
   deriving (IsString, Eq, Show)
 
+-- | Histogram is a paramterized map of given types of keys to Integer counts.
+newtype Histogram k = Histogram (Map.Map k Integer)
+  deriving (Eq, Show)
+
 -- | Converts a base16 string to a base64 string
 hexToBase64 :: Base16 -> Base64
 hexToBase64 = Base64 . B64.encode . fst . B16.decode . fromBase16
@@ -30,6 +34,6 @@ xor a b = Base16 . B16.encode . BS.pack $ BS.zipWith Bits.xor a' b'
 
 -- | Returns a histogram of counts of each distinct byte present in the given
 --   base16 encoded string.
-histogram :: Base16 -> Map.Map Word8 Integer
-histogram s = BS.foldl count Map.empty $ fromBase16 s
+histogram :: Base16 -> Histogram Word8
+histogram = Histogram . BS.foldl count Map.empty . fromBase16
   where count h b = Map.insertWith (+) b 1 h
