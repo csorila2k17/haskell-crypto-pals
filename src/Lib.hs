@@ -15,8 +15,8 @@ hexToBase64 = B64.encode . fst . B16.decode
 
 -- | Returns a byte-wise xor of the two given strings.
 xor :: BS.ByteString -> BS.ByteString -> BS.ByteString
-xor a b = B16.encode $ BS.pack $ BS.zipWith Bits.xor (head bs) (last bs)
-  where bs = fmap (fst . B16.decode) [a, b]
+xor a b = B16.encode $ BS.pack $ BS.zipWith Bits.xor a' b'
+  where [a', b'] = fmap (fst . B16.decode) [a, b]
 
 -- | Returns a histogram of counts of each distinct byte present in the given
 --   string.
