@@ -1,25 +1,35 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 module Lib (hexToBase64, xor, histogram) where
 
-import qualified Data.ByteString as BS
+import Data.String (IsString)
 import Data.Word
-import qualified Data.ByteString.Base64 as B64 (encode)
-import qualified Data.ByteString.Base16 as B16 (encode, decode)
 import qualified Data.Bits as Bits (xor)
+import qualified Data.ByteString as BS
+import qualified Data.ByteString.Base16 as B16 (encode, decode)
+import qualified Data.ByteString.Base64 as B64 (encode)
 import qualified Data.Map.Strict as Map
 
--- | Converts a base 16 string to a base 64 string
-hexToBase64 :: BS.ByteString -> BS.ByteString
-hexToBase64 = B64.encode . fst . B16.decode
+-- | Base64 is a base64 encoded byte string
+newtype Base64 = Base64 { fromBase64 :: BS.ByteString }
+  deriving (IsString, Eq, Show)
 
--- | Returns a byte-wise xor of the two given strings.
-xor :: BS.ByteString -> BS.ByteString -> BS.ByteString
-xor a b = B16.encode $ BS.pack $ BS.zipWith Bits.xor a' b'
-  where [a', b'] = fmap (fst . B16.decode) [a, b]
+-- | Base16 is a base16 (hex) encoded byte string
+newtype Base16 = Base16 { fromBase16 :: BS.ByteString }
+  deriving (IsString, Eq, Show)
+
+-- | Converts a base16 string to a base64 string
+hexToBase64 :: Base16 -> Base64
+hexToBase64 = Base64 . B64.encode . fst . B16.decode . fromBase16
+
+-- | Returns a byte-wise base16 encoded xor of the two given base16 strings.
+xor :: Base16 -> Base16 -> Base16
+xor a b = Base16 . B16.encode . BS.pack $ BS.zipWith Bits.xor a' b'
+  where [a', b'] = fmap (fst . B16.decode . fromBase16) [a, b]
 
 -- | Returns a histogram of counts of each distinct byte present in the given
---   string.
-histogram :: BS.ByteString -> Map.Map Word8 Integer
-histogram = BS.foldl count Map.empty
+--   base16 encoded string.
+histogram :: Base16 -> Map.Map Word8 Integer
+histogram s = BS.foldl count Map.empty $ fromBase16 s
   where count h b = Map.insertWith (+) b 1 h
