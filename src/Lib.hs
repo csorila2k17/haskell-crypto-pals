@@ -9,6 +9,7 @@ module Lib (
   similarity,
   xor,
   keys,
+  scores,
   keyScores,
   histogram,
   Histogram,
