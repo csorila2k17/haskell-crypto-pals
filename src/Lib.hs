@@ -124,20 +124,22 @@ keyScores ref cipher = sortBy cmp $ zip keys $ scores keys ref cipher where
 -- | Returns the set of ASCII keys of length 1 to be used for xor cracking.
 keys :: [BS.ByteString]
 keys = (BS.singleton . fromIntegral . ord) <$>
-  filter pred' [(minBound::Char)..(maxBound::Char)] where
-    pred' c = isAscii c && isPrint c
+  filter isAsciiPrint [(minBound::Char)..(maxBound::Char)]
+
+-- | Predicate on Chars that returns true for printable ASCII
+isAsciiPrint :: Char -> Bool
+isAsciiPrint c = isAscii c && isPrint c
 
 -- | Returns a list of similarity scoresfor the given keys xored with the
 -- given cipher text.
 scores :: [Key] -> FrequencyTable -> CipherText -> [Score]
 scores ks ref cipher = score <$> ks where
   score = similarity ref . frequencies . histogram . ngrams'
-  ngrams' k = [lo..hi] >>= ngrams (upper $ xor cipher k)
+  ngrams' k = [lo..hi] >>= ngrams (decode' $ xor cipher k)
+  decode' s = either (return "") normal' $ decodeUtf8' s
+  normal' = encodeUtf8 . T.filter isAsciiPrint . T.toUpper
   [lo, hi] = (.) (fromIntegral . BS.length . fst) <$>
     [Map.findMin, Map.findMax] <*> [ref]
-  upper s = case decodeUtf8' s of
-    Left  _  -> ""
-    Right ss -> encodeUtf8 $ T.toUpper ss
 
 -- | Returns the similarity score of two frequency tables ranging from 0 to 1,
 -- where 0 means completely different and 1 means identical. Implements the
