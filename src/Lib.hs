@@ -8,6 +8,7 @@ module Lib (
   hexToBase64,
   similarity,
   xor,
+  keys,
   keyScores,
   histogram,
   Histogram,
@@ -56,6 +57,9 @@ type CipherText = BS.ByteString
 -- | PlainText represents decrypted cypher text
 type PlainText = BS.ByteString
 
+-- | Score represents a Ngram frequency similarity score
+type Score = Double
+
 -- | Ngram is an Ngram and its number of occurences in a corpus.
 data Ngram = Ngram BS.ByteString Integer deriving (Show, Eq, Ord, Generic)
 
@@ -67,7 +71,7 @@ instance FromRecord Ngram
 type Histogram = Map.Map BS.ByteString Integer
 
 -- | FrequencyTable is a map of Ngrams to their relative frequency in a corpus.
-type FrequencyTable = Map.Map BS.ByteString Double
+type FrequencyTable = Map.Map BS.ByteString Score
 
 -- | Returns a decoded BS.ByteString from a Base16 encoded string
 fromBase16 :: Base16 -> BS.ByteString
@@ -112,14 +116,24 @@ frequencies h = fmap (digits 5 . freq) h where
 
 -- | Returns a sorted list of tuples of single charachter xor keys and
 -- similarity scores to the reference frequency table.
-keyScores :: FrequencyTable -> CipherText -> [(Key, Double)]
-keyScores ref cipher = sortBy cmp [(k, score k) | k <- keys] where
+keyScores :: FrequencyTable -> CipherText -> [(Key, Score)]
+keyScores ref cipher = sortBy cmp $ zip keys $ scores keys ref cipher where
   cmp  = comparing $ Down . snd
-  keys = (BS.singleton . fromIntegral . ord) <$>
-    filter pred' [(minBound::Char)..(maxBound::Char)]
-  pred' c = isAscii c && isPrint c
+
+-- | Returns the set of ASCII keys of length 1 to be used for xor cracking.
+keys :: [BS.ByteString]
+keys = (BS.singleton . fromIntegral . ord) <$>
+  filter pred' [(minBound::Char)..(maxBound::Char)] where
+    pred' c = isAscii c && isPrint c
+
+-- | Returns a list of similarity scoresfor the given keys xored with the
+-- given cipher text.
+scores :: [Key] -> FrequencyTable -> CipherText -> [Score]
+scores ks ref cipher = score <$> ks where
   score = similarity ref . frequencies . histogram . ngrams'
-  ngrams' k = [1..5] >>= ngrams (upper $ xor cipher k)
+  ngrams' k = [lo..hi] >>= ngrams (upper $ xor cipher k)
+  [lo, hi] = (.) (fromIntegral . BS.length . fst) <$>
+    [Map.findMin, Map.findMax] <*> [ref]
   upper s = case decodeUtf8' s of
     Left  _  -> ""
     Right ss -> encodeUtf8 $ T.toUpper ss
@@ -127,7 +141,7 @@ keyScores ref cipher = sortBy cmp [(k, score k) | k <- keys] where
 -- | Returns the similarity score of two frequency tables ranging from 0 to 1,
 -- where 0 means completely different and 1 means identical. Implements the
 -- cosine similarity formula.
-similarity :: FrequencyTable -> FrequencyTable -> Double
+similarity :: FrequencyTable -> FrequencyTable -> Score
 similarity a b = dot a b / (norm a * norm b)
 
 -- | Reads and decodes Ngrams from a given file.
