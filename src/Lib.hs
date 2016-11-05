@@ -118,8 +118,8 @@ keyScores ref cipher = sortBy cmp [(k, score k) | k <- keys] where
   keys = (BS.singleton . fromIntegral . ord) <$>
     filter pred' [(minBound::Char)..(maxBound::Char)]
   pred' c = isAscii c && isPrint c
-  score = (similarity ref) . frequencies . histogram . ngrams'
-  ngrams' k = [1..5] >>= (ngrams $ upper $ xor cipher k)
+  score = similarity ref . frequencies . histogram . ngrams'
+  ngrams' k = [1..5] >>= ngrams (upper $ xor cipher k)
   upper s = case decodeUtf8' s of
     Left  _  -> ""
     Right ss -> encodeUtf8 $ T.toUpper ss
