@@ -39,9 +39,9 @@ unitTests english = testGroup "Unit tests" [
   ]
 
 keyScoresTest :: FrequencyTable -> TestTree
-keyScoresTest ref = testCase "https://cryptopals.com/sets/1/challenges/3 (crackXor)" $
-  ks @?= [] where
-    ks = xorKeys ref cipher
+keyScoresTest ref = testCase "https://cryptopals.com/sets/1/challenges/3 (keyScores)" $
+  (fst $ head ks) @?= "X" where
+    ks = keyScores ref cipher
     cipher = fromBase16 "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736"
 
 
