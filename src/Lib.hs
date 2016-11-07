@@ -153,7 +153,7 @@ similarity a b = dot a b / (norm a * norm b)
 
 -- | Returns the hamming distance between two lists of Bits instances.
 hammingDistance :: (Bits.Bits a) => [a] -> [a] -> Int
-hammingDistance a b = sum $ Bits.popCount <$> zipWith (Bits.xor) a b
+hammingDistance a b = sum $ Bits.popCount <$> zipWith Bits.xor a b
 
 -- | Returns a FrequencyTable from the given Ngram vector.
 ngramFrequencies :: V.Vector Ngram -> FrequencyTable
