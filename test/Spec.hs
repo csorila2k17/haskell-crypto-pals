@@ -50,4 +50,4 @@ main = do
   ns <- decodeNgramsFromFile "ngrams.csv"
   case ns of
     Left err -> putStrLn err
-    Right v -> defaultMain $ tests $ frequencies $ histogram $ V.toList v
+    Right v -> defaultMain $ tests $ ngramFrequencies v

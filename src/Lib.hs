@@ -17,6 +17,7 @@ module Lib (
   FrequencyTable,
   Ngram,
   ngrams,
+  ngramFrequencies,
   decodeNgramsFromFile
 ) where
 
@@ -144,6 +145,10 @@ scores ks ref cipher = score <$> ks where
 -- cosine similarity formula.
 similarity :: FrequencyTable -> FrequencyTable -> Score
 similarity a b = dot a b / (norm a * norm b)
+
+-- | Returns a FrequencyTable from the given Ngram vector.
+ngramFrequencies :: V.Vector Ngram -> FrequencyTable
+ngramFrequencies = frequencies . histogram . V.toList
 
 -- | Reads and decodes Ngrams from a given file.
 decodeNgramsFromFile :: FilePath -> IO (Either String (V.Vector Ngram))
