@@ -14,10 +14,9 @@ module Lib (
   hexToBase64,
   histogram,
   keyScores,
-  keys,
+  genKeys,
   ngramFrequencies,
   ngrams,
-  scores,
   similarity,
   toBase16,
   toBase64,
@@ -27,7 +26,9 @@ module Lib (
 import Control.Applicative ((<$>))
 import Control.Exception (IOException)
 import Control.Exception.Base (catch)
-import Data.Char (ord, isAscii, isPrint, Char)
+import Control.Monad (replicateM)
+import Data.Char (isAscii, isPrint, ord)
+import Data.Word (Word8)
 import Data.List (sortBy)
 import Data.Ord (comparing, Down(..))
 import Data.Text.Lazy.Encoding (decodeUtf8', encodeUtf8)
@@ -121,25 +122,22 @@ ngrams s n
 frequencies :: Histogram -> FrequencyTable
 frequencies h = freq <$> h where freq x = fromIntegral x / fromIntegral (sum h)
 
--- | Returns a sorted list of tuples of single charachter xor keys and
--- similarity scores to the reference frequency table.
-keyScores :: FrequencyTable -> CipherText -> [(Key, Score)]
-keyScores ref cipher = sortBy cmp $ zip keys $ scores keys ref cipher where
-  cmp = comparing $ Down . snd
-
--- | Returns the set of ASCII keys of length 1 to be used for xor cracking.
-keys :: [BS.ByteString]
-keys = (BS.singleton . fromIntegral . ord) <$>
-  filter isAsciiPrint [(minBound::Char)..(maxBound::Char)]
-
 -- | Predicate on Chars that returns true for printable ASCII
 isAsciiPrint :: Char -> Bool
 isAsciiPrint c = isAscii c && isPrint c
 
--- | Returns a list of similarity scoresfor the given keys xored with the
--- given cipher text.
-scores :: [Key] -> FrequencyTable -> CipherText -> [Score]
-scores ks ref cipher = score <$> ks where
+-- | Generates a set of ASCII keys of up to length n to be used for xor cracking.
+genKeys :: Int -> [Key]
+genKeys n = BS.pack <$> ([1..n] >>= (`replicateM` alphabet)) where
+  alphabet :: [Word8]
+  alphabet = fromIntegral . ord <$>
+    filter isAsciiPrint [(minBound::Char)..(maxBound::Char)]
+
+-- | Returns a sorted tuple list of keys and correspondent similarity scores
+-- of the xored key with the cipher text, relative to the given Ngram frequency table.
+keyScores :: [Key] -> FrequencyTable -> CipherText -> [(Key, Score)]
+keyScores keys ref cipher = sortBy cmp $ zip keys $ score <$> keys where
+  cmp = comparing $ Down . snd
   score = similarity ref . frequencies . histogram . ngrams'
   ngrams' k = [lo..hi] >>= ngrams (decode' $ xor cipher k)
   decode' s = either (return "") normal' $ decodeUtf8' s
