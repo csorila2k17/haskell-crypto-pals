@@ -43,8 +43,19 @@ unitTests english = testGroup "Unit tests" [
     hammingDistance ([001] :: [Int]) ([002] :: [Int]) @?= 2,
     hammingDistance ([0b1] :: [Int]) ([0b0] :: [Int]) @?= 1,
     hammingDistance ([0b0001, 0b0010] :: [Int])
-                    ([0b0010, 0b1000] :: [Int]) @?= 2 + 2]
-  ]
+                    ([0b0010, 0b1000] :: [Int]) @?= 2 + 2],
+
+  testCase "https://cryptopals.com/sets/1/challenges/6 (slice)" $ sequence_ [
+    slice 5 5 "abcde" @?= (["abcde"],                 ""),
+    slice 5 1 "abcde" @?= (["abcde"],                 "bcde"),
+    slice 1 1 "abcde" @?= (["a", "b", "c", "d", "e"], ""),
+    slice 1 2 "abcde" @?= (["a", "c", "e"],           ""),
+    slice 2 2 "abcde" @?= (["ab", "cd"],              "e"),
+    slice 2 1 "abcde" @?= (["ab", "bc", "cd", "de"],  "e"),
+    slice 0 1 "abcde" @?= ([],                        "abcde"),
+    slice 1 0 "abcde" @?= ([],                        "abcde"),
+    slice 0 1 "abcde" @?= ([],                        "abcde")
+  ]]
 
 keyScoresTest :: FrequencyTable -> TestTree
 keyScoresTest ref = testCase "https://cryptopals.com/sets/1/challenges/3 (keyScores)" $

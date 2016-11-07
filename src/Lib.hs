@@ -10,14 +10,15 @@ module Lib (
   frequencies,
   fromBase16,
   fromBase64,
+  genKeys,
   hammingDistance,
   hexToBase64,
   histogram,
   keyScores,
-  genKeys,
   ngramFrequencies,
   ngrams,
   similarity,
+  slice,
   toBase16,
   toBase64,
   xor,
@@ -113,10 +114,7 @@ histogram ns = Map.fromListWith (+) (fmap pairs ns)
 
 -- | Returns a list of Ngrams of size n from the given corpus.
 ngrams :: BS.ByteString -> Int -> [Ngram]
-ngrams _ 0 = []
-ngrams s n
-  | (fromIntegral . BS.length) s < n = []
-  | otherwise = Ngram (BS.take (fromIntegral n) s) 1 : ngrams (BS.drop 1 s) n
+ngrams s n = Ngram <$> fst (slice n 1 s) <*> [1]
 
 -- | Returns a FrequencyTable from the given Histogram.
 frequencies :: Histogram -> FrequencyTable
@@ -125,6 +123,14 @@ frequencies h = freq <$> h where freq x = fromIntegral x / fromIntegral (sum h)
 -- | Predicate on Chars that returns true for printable ASCII
 isAsciiPrint :: Char -> Bool
 isAsciiPrint c = isAscii c && isPrint c
+
+-- | Slices the given string into a list of sub strings of size n, advancing
+-- step positions after each slice.
+slice :: Int -> Int -> BS.ByteString -> ([BS.ByteString], BS.ByteString)
+slice n step s
+  | BS.length s < n' || n == 0 || step == 0 = ([], s)
+  | otherwise = ([BS.take n' s], "") `mappend` slice n step (BS.drop step' s)
+  where [n', step'] = fromIntegral <$> [n, step]
 
 -- | Generates a set of ASCII keys of up to length n to be used for xor cracking.
 genKeys :: Int -> [Key]
