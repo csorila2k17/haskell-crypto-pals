@@ -3,24 +3,25 @@
 {-# LANGUAGE DeriveGeneric #-}
 
 module Lib (
-  toBase16,
-  fromBase16,
-  toBase64,
-  fromBase64,
-  hexToBase64,
-  similarity,
-  xor,
-  keys,
-  scores,
-  keyScores,
-  histogram,
-  Histogram,
-  frequencies,
   FrequencyTable,
+  Histogram,
   Ngram,
-  ngrams,
+  decodeNgramsFromFile,
+  frequencies,
+  fromBase16,
+  fromBase64,
+  hammingDistance,
+  hexToBase64,
+  histogram,
+  keyScores,
+  keys,
   ngramFrequencies,
-  decodeNgramsFromFile
+  ngrams,
+  scores,
+  similarity,
+  toBase16,
+  toBase64,
+  xor,
 ) where
 
 import Control.Applicative ((<$>))
@@ -39,7 +40,7 @@ import Data.Csv
   )
 
 import qualified Data.Text.Lazy as T
-import qualified Data.Bits as Bits (xor)
+import qualified Data.Bits as Bits (Bits, xor, popCount)
 import qualified Data.ByteString.Base16.Lazy as B16 (encode, decode)
 import qualified Data.ByteString.Base64.Lazy as B64 (encode, decodeLenient)
 import qualified Data.ByteString.Lazy as BS
@@ -124,7 +125,7 @@ frequencies h = freq <$> h where freq x = fromIntegral x / fromIntegral (sum h)
 -- similarity scores to the reference frequency table.
 keyScores :: FrequencyTable -> CipherText -> [(Key, Score)]
 keyScores ref cipher = sortBy cmp $ zip keys $ scores keys ref cipher where
-  cmp  = comparing $ Down . snd
+  cmp = comparing $ Down . snd
 
 -- | Returns the set of ASCII keys of length 1 to be used for xor cracking.
 keys :: [BS.ByteString]
@@ -151,6 +152,10 @@ scores ks ref cipher = score <$> ks where
 -- cosine similarity formula.
 similarity :: FrequencyTable -> FrequencyTable -> Score
 similarity a b = dot a b / (norm a * norm b)
+
+-- | Returns the hamming distance between two lists of Bits instances.
+hammingDistance :: (Bits.Bits a) => [a] -> [a] -> Int
+hammingDistance a b = sum $ Bits.popCount <$> zipWith (Bits.xor) a b
 
 -- | Returns a FrequencyTable from the given Ngram vector.
 ngramFrequencies :: V.Vector Ngram -> FrequencyTable
