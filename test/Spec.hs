@@ -27,8 +27,7 @@ unitTests english = testGroup "Unit tests" [
 
   testCase "https://cryptopals.com/sets/1/challenges/3 (frequencies)" $
     (frequencies . histogram . flip ngrams 1) "foobar"
-    @?= Map.fromList [
-      ("a",1/6),("b",1/6),("f",1/6),("o",2/6),("r",1/6)],
+    @?= Map.fromList [("a",1/6),("b",1/6),("f",1/6),("o",2/6),("r",1/6)],
 
   keyScoresTest english,
 
