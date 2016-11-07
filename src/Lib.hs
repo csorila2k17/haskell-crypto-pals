@@ -5,6 +5,8 @@
 module Lib (
   toBase16,
   fromBase16,
+  toBase64,
+  fromBase64,
   hexToBase64,
   similarity,
   xor,
@@ -39,7 +41,7 @@ import Data.Csv
 import qualified Data.Text.Lazy as T
 import qualified Data.Bits as Bits (xor)
 import qualified Data.ByteString.Base16.Lazy as B16 (encode, decode)
-import qualified Data.ByteString.Base64.Lazy as B64 (encode)
+import qualified Data.ByteString.Base64.Lazy as B64 (encode, decodeLenient)
 import qualified Data.ByteString.Lazy as BS
 import qualified Data.Map.Strict as Map
 import qualified Data.Vector as V
@@ -86,6 +88,10 @@ toBase16 = B16.encode
 -- | Returns an encoded Base64 string from a ByteString
 toBase64 :: BS.ByteString -> Base64
 toBase64 = B64.encode
+
+-- | Decodes a given Base64 encoded string
+fromBase64 :: Base64 -> BS.ByteString
+fromBase64 = B64.decodeLenient
 
 -- | Converts a base16 string to a base64 string
 hexToBase64 :: Base16 -> Base64
