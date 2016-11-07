@@ -3,8 +3,9 @@
 
 import Test.Tasty
 import Test.Tasty.HUnit
+
+import qualified Data.ByteString.Lazy as BS
 import qualified Data.Map as Map
-import qualified Data.Vector as V
 
 import Lib
 
@@ -37,12 +38,12 @@ unitTests english = testGroup "Unit tests" [
     @?= fromBase16 "0b3637272a2b2e63622c2e69692a23693a2a3c6324202d623d63343c2a26226324272765272a282b2f20430a652e2c652a3124333a653e2b2027630c692b20283165286326302e27282f",
 
   testCase "https://cryptopals.com/sets/1/challenges/6 (hammingDistance)" $ sequence_ [
+    hammingDistance (BS.unpack "this is a test") (BS.unpack "wokka wokka!!!") @?= 37,
     hammingDistance ([254] :: [Int]) ([255] :: [Int]) @?= 1,
     hammingDistance ([001] :: [Int]) ([002] :: [Int]) @?= 2,
     hammingDistance ([0b1] :: [Int]) ([0b0] :: [Int]) @?= 1,
     hammingDistance ([0b0001, 0b0010] :: [Int])
                     ([0b0010, 0b1000] :: [Int]) @?= 2 + 2]
-
   ]
 
 keyScoresTest :: FrequencyTable -> TestTree
