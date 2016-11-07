@@ -111,9 +111,7 @@ ngrams s n
 
 -- | Returns a FrequencyTable from the given Histogram.
 frequencies :: Histogram -> FrequencyTable
-frequencies h = fmap (digits 5 . freq) h where
-  freq x = fromIntegral x / fromIntegral (sum h)
-  digits n f = fromInteger (round $ f * (10^n)) / (10.0^^n)
+frequencies h = freq <$> h where freq x = fromIntegral x / fromIntegral (sum h)
 
 -- | Returns a sorted list of tuples of single charachter xor keys and
 -- similarity scores to the reference frequency table.
